@@ -1,0 +1,17 @@
+[architecture]
+  lda_dim = 300
+[training]
+  loss = cross_entropy
+  ptar = 0.01
+  max_norm = 4
+  l2_reg = {'default': 0.0001, 'cal_stage.sidep_.*.L': 0.0005, 'cal_stage.sidep_.*.C': 0.0005, 'cal_stage.sidep_.*.G': 0.0005}
+  learning_rate = 0.001
+  betas = (0.5, 0.99)
+  learning_rate_params = None
+  init_params = {'w_init': 0.5, 'plda_em_its': 100, 'balance_by_domain': True}
+  batch_size = 2048
+  num_epochs = 3000
+  num_samples_per_class = 2
+  num_batches_per_epoch = 1
+  compute_ave_model = False
+  balance_batches_by_domain = True

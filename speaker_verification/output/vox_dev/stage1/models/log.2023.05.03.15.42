@@ -1,0 +1,77 @@
+Configuration parameters:
+  [architecture]
+    lda_dim = 300
+  [training]
+    loss = cross_entropy
+    ptar = 0.01
+    max_norm = 4
+    l2_reg = {'default': 0.0001, 'cal_stage.sidep_.*.L': 0.0005, 'cal_stage.sidep_.*.C': 0.0005, 'cal_stage.sidep_.*.G': 0.0005}
+    learning_rate = 0.001
+    betas = (0.5, 0.99)
+    learning_rate_params = None
+    init_params = {'w_init': 0.5, 'plda_em_its': 100, 'balance_by_domain': True}
+    batch_size = 2048
+    num_epochs = 3000
+    num_samples_per_class = 2
+    num_batches_per_epoch = 1
+    compute_ave_model = False
+    balance_batches_by_domain = True
+Using seed:  0
+Loading data from ./data/train/embeddings_dev.h5
+  with metadata file ./data/train/metadata_vox_dev
+  Done loading embeddings
+  Converting metadata strings into indices
+Done. Loaded 4903 embeddings from ./data/train/embeddings_dev.h5
+Printing graph in output/vox_dev/stage1/models/graph
+Initializing trial loader (this might take a while for big datasets but this process saves time during training).
+  Creating dictionary with a list of class_id for each ['domain_id']
+  Creating dictionary with a list of session_id for each ['class_id', 'domain_id']
+  Creating dictionary with a list of sample_id for each ['session_id', 'class_id', 'domain_id']
+  Creating dictionary with a list of domain_id for each ['class_id']
+Selecting 5 classes for domain VOX, and 2 samples per selected class
+Done Initializing trial loader
+Will create 1 batches of size 10 per epoch using 4903 samples
+Torchviz unavailable. Skipping graph creation
+List of model parameters:
+   lda_stage.W torch.Size([512, 300])
+   lda_stage.b torch.Size([300])
+   plda_stage.L torch.Size([300, 300])
+   plda_stage.G torch.Size([300, 300])
+   plda_stage.C torch.Size([300, 1])
+   plda_stage.k torch.Size([])
+   cal_stage.alpha torch.Size([])
+   cal_stage.beta torch.Size([])
+
+####################################################################################
+Starting training
+Loading data from ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/embeddings_test.h5
+  with metadata file ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/durations
+  Done loading embeddings
+  Converting metadata strings into indices
+Done. Loaded 4903 embeddings from ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/embeddings_test.h5
+Loaded 4903 1-session models from ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/enroll.lst
+Loaded 4903 1-session models from ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/test.lst
+Loaded key file ../../DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4-16sec/keys/all.h5
+Some of the files (29) in the subset are missing. Ignoring them
+Initializing trial loader (this might take a while for big datasets but this process saves time during training).
+  Creating dictionary with a list of class_id for each ['domain_id']
+  Creating dictionary with a list of session_id for each ['class_id', 'domain_id']
+  Creating dictionary with a list of sample_id for each ['session_id', 'class_id', 'domain_id']
+  Creating dictionary with a list of domain_id for each ['class_id']
+Selecting 1024 classes for domain VOX, and 2 samples per selected class
+Done Initializing trial loader
+Will create 1 batches of size 2048 per epoch using 4903 samples
+hola, llegue
+<dca_plda.data.TrialLoader object at 0x7f70ef78dc70>
+0
+(tensor([[-16.2505, -12.0114,  12.1643,  ...,   3.6646, -19.0497, -11.1183],
+        [-14.8112, -15.8656,  14.0224,  ...,   3.5973, -25.5879, -11.6376],
+        [-12.8514, -15.1678,  16.4964,  ...,   3.5825, -18.7193, -11.5370],
+        ...,
+        [-15.7257, -17.5942,  10.6002,  ...,   3.0194, -24.8955, -15.7317],
+        [-16.8616, -17.9457,  11.2810,  ...,   3.0273, -24.4676, -12.9436],
+        [-16.3444, -17.1181,  11.6796,  ...,   2.9650, -21.7033, -13.6605]]), {'sample_id': tensor([3588., 3578., 3563.,  ..., 3324., 2507., 2493.]), 'class_id': tensor([86., 86., 85.,  ..., 77., 61., 61.]), 'session_id': tensor([3588., 3578., 3563.,  ..., 3324., 2507., 2493.]), 'domain_id': tensor([0., 0., 0.,  ..., 0., 0., 0.]), 'duration': tensor([5.2100, 6.0200, 3.3100,  ..., 6.2300, 8.6800, 3.5600])})
+2048
+2048
+Created 1 batches with the following number of resets of the class lists per domain:
+  dom VOX: 8 resets, 118 classes
