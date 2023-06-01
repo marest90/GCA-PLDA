@@ -2,20 +2,22 @@ import sys
 import numpy
 from random import sample, shuffle
 import h5py
+from os.path import exists
+
 sys.path.insert(0, '/home/mariel/dcaplda-repo/DCA-PLDA')
 
 from dca_plda import scores
 
+###########################################################################################################
 def keys_to_list(keys):
+
+    """ Creates a list from the key mask """
 
     keys_inmem = scores.Key.load(keys)
     enrollids = keys_inmem.enroll_ids
     testids = keys_inmem.test_ids
     maski = keys_inmem.mask
 
-    #print(enrollids)
-    #print(testids)
-    #print(maski)
 
     key = []
     key_test = []
@@ -35,19 +37,21 @@ def keys_to_list(keys):
 
     return key_test, key_enroll, key
 
-############Defino funcion para borrar elementos de lista usando una lista de indices
+###########################################################################################################
 def delete_multiple_element(list_object, indices):
+    """ Deletes elements from a list using a list of indexes """
     indices = sorted(indices, reverse=True)
     for idx in indices:
         if idx < len(list_object):
             list_object.pop(idx)
 
-keys_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/keys/key_total.h5'
-
-#key_test, key_enroll, key = keys_to_list(keys_file)
 
 
+###########################################################################################################
 def sample_key(keys_file, n_tar, n_non):
+    """ Samples a list of key to a desire size, needs n_tar and n_non (int) to set the number of target and non target samples """
+
+    print('Sampling trials, this might take a while')    
     key_test, key_enroll, key = keys_to_list(keys_file)
 
     tar_ind = list(numpy.nonzero(key)[0])
@@ -75,6 +79,7 @@ def sample_key(keys_file, n_tar, n_non):
     shuffle(zip_list)
 
     test_f, enroll_f, key_f = zip(*zip_list)
+    print('Done sampling')
 
     return list(test_f), list(enroll_f), list(key_f)
 
@@ -92,7 +97,7 @@ def load_embeddings(emb_file):
     else:
         raise Exception("Unrecognized format for embeddings file %s"%emb_file)
 
-    print("  Done loading embeddings")
+    print("Loaded embedding file %s"%emb_file)
     embeddings_all = data_dict['data']
     if type(data_dict['ids'][0]) == numpy.bytes_:
         ids_all = [i.decode('UTF-8') for i in data_dict['ids']]
@@ -113,10 +118,13 @@ def create_scrlist(enroll_list, test_list, scores_dictionary):
 
     for i in range(len(enroll_list)):
         try:
-            scrs.append(scores_dict[enroll_list[i]][test_list[i]])
+            scrs.append(scores_dictionary[enroll_list[i]][test_list[i]])
         except:
-            print('id not in scores file found. Listed in index list')
+            #print(enroll_list[i], test_list[i]) #print sessions not found in scores file
             index.append(i)
+
+    if len(index) > 0:
+        print('Session in key not present in scores file found. These sessions will be excluded from the table.')
 
     return scrs, index
 
@@ -143,88 +151,82 @@ def save_table(enroll_list, test_list, key_list, scores_list, emb1, emb2,format,
             f.create_dataset('embedding2',     data=emb2)
 
     print('Succesfully saved!')
+
 ###########################################################################################################
+def create_data_table(keys_file, emb_file, scores_file, file_path, n_tar, n_non):
+    """ Creates a table containing trials to use, including enroll_id, test_id, key,  score, enroll_embedding, test_embedding and saves it in txt or h5 format """
+
+    if exists(file_path):
+        print('Data table already exists, nothing to do')
+
+    else:
+        print('Creating data table, please wait')
+        test_f, enroll_f, key_f = sample_key(keys_file, n_tar, n_non)
+        emb_ids, emb_data = load_embeddings(emb_file)
 
 
+        emb_dict = {emb_ids[i]: emb_data[i] for i in range(len(emb_ids))}
+        emb1 = [emb_dict[k] for k in test_f]
+        emb2 = [emb_dict[k] for k in enroll_f]
+
+        scores_obj = scores.Scores.load(scores_file) #contains enroll_ids, test_ids, score_mat
+        scores_dict = {scores_obj.enroll_ids[i]:{scores_obj.test_ids[j]:scores_obj.score_mat[i][j]  for j in range(len(scores_obj.test_ids))} for i in range(len(scores_obj.enroll_ids))}
+
+        scrs, index = create_scrlist(enroll_f, test_f, scores_dict)
+
+        #test_notinscr = [test_f[j] for j in index]
+        #print(test_notinscr)
+
+        delete_multiple_element(test_f, index)
+        delete_multiple_element(enroll_f, index)
+        delete_multiple_element(key_f, index)
+        delete_multiple_element(emb1, index)
+        delete_multiple_element(emb2, index)
+
+        
+
+        scrs = []
+        for i in range(len(test_f)):
+            scrs.append(scores_dict[enroll_f[i]][test_f[i]])
+
+        save_table(enroll_f, test_f, key_f, scrs, emb1, emb2, 'h5',folder_path)
+
+###########################################################################################################
+def load_data_table(filename):
+    """ Build Key from a text file with the following format 
+    * trainID testID tgt/imp for SID
+    * testID languageID for LID
+    or in h5 format where the enrollids are the languageids in the case of LID.
+    """
+
+    if filename.endswith(".h5"):
+        with h5py.File(filename, 'r') as f:
+            enroll_ids = f['enroll_ids'][()]
+            test_ids   = f['test_ids'][()]
+            key      = f['key'][()]
+            score      = f['score'][()]
+            emb1      = f['embedding1'][()]
+            emb2      = f['embedding2'][()]
+
+            if type(enroll_ids[0]) == numpy.bytes_:
+                enroll_ids = [i.decode('UTF-8') for i in enroll_ids]
+                test_ids   = [i.decode('UTF-8') for i in test_ids]
+
+    return enroll_ids, test_ids, key, score, emb1, emb2
 
 
 n_tar = 5000
 n_non = 20000
 
-test_f, enroll_f, key_f = sample_key(keys_file, n_tar, n_non)
-
-print('key=',test_f[0])
-
+keys_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/keys/key_total.h5'
 emb_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/embeddings_test.h5'
-
-emb_ids, emb_data = load_embeddings(emb_file)
-
-print('emb=', emb_ids[0])
-
-emb_dict = {emb_ids[i]: emb_data[i] for i in range(len(emb_ids))}
-
-emb1 = [emb_dict[k] for k in test_f]
-emb2 = [emb_dict[k] for k in enroll_f]
-
-
 scores_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/output/voxaccent-s4/dplda/stage1/eval_best/voxceleb2_4ch_16sec/scores.h5'
+folder_path = './data_table.h5'
 
-scores_obj = scores.Scores.load(scores_file) #contains enroll_ids, test_ids, score_mat
+create_data_table(keys_file, emb_file, scores_file, folder_path, n_tar, n_non)
 
-#print(scores_obj.score_mat[1][2], scores_obj.enroll_ids[1], scores_obj.test_ids[2])
-#print(scores_obj.enroll_ids[:100])
-#print(scores_obj.test_ids[:100])
+enroll_ids, test_ids, key, score, emb1, emb2 = load_data_table(folder_path)
 
+#print(enroll_ids)
+print(enroll_ids[0], test_ids[0], key[0], score[0], emb1[0], emb2[0])
 
-scores_dict = {scores_obj.enroll_ids[i]:{scores_obj.test_ids[j]:scores_obj.score_mat[i][j]  for j in range(len(scores_obj.test_ids))} for i in range(len(scores_obj.enroll_ids))}
-
-#print(scores_dict[enroll_f[0]][test_f[1]])
-
-
-
-
-
-
-scrs, index = create_scrlist(enroll_f, test_f, scores_dict)
-
-print(index)
-test_notinscr = [test_f[j] for j in index]
-print(test_notinscr)
-
-
-delete_multiple_element(test_f, index)
-delete_multiple_element(enroll_f, index)
-delete_multiple_element(key_f, index)
-delete_multiple_element(emb1, index)
-delete_multiple_element(emb2, index)
-
-
-
-
-
-scrs = []
-for i in range(len(test_f)):
-    scrs.append(scores_dict[enroll_f[i]][test_f[i]])
-
-folder_path = './data_table.txt'
-
-#Escribe el archivo
-with open(folder_path, 'w') as f:
-    for i in range(len(test_f)):
-        f.write(test_f[i] + ' ' + enroll_f[i] + ' ' + str(key_f[i]) + ' ' + str(scrs[i])) # + ' ' + emb1[i] + ' ' + emb2[i] )
-        f.write('\n')
-
-
-####Escribo el arcivo h5 con los embeddings
-with h5py.File('./data_table.h5','w') as f:
-    f.create_dataset('enroll_ids',   data=numpy.string_(enroll_f))
-    f.create_dataset('test_ids',   data=numpy.string_(test_f))
-    f.create_dataset('key',   data=key_f)
-    f.create_dataset('score',   data=scrs)
-    f.create_dataset('embedding1',     data=emb1)
-    f.create_dataset('embedding2',     data=emb2)
-
-
-
-
-save_table(enroll_f, test_f, key_f, scrs, emb1, emb2, 'h5','./data2.h5')
