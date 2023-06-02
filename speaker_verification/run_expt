@@ -4,67 +4,68 @@ export PYTHONPATH=../../:$PYTHONPATH
 scripts=../scripts
 
 # Defaults
-train_set=vox_dev
-dev_sets="voxceleb2_4-16sec"
-arch_name=dplda
-arch_config=configs/arch/$arch_name.ini
-seed=0
-device=0
+#train_set=vox_dev
+dev_set="voxceleb2_4ch_16sec"
+#arch_name=dplda
+#arch_config=configs/arch/$arch_name.ini
+#seed=0
+#device=0
 #root_dir=output/voxaccent_bal2-s$seed/$arch_name
-root_dir=output/vox_dev
+root_dir=output/voxceleb2_dev
 plda_dir=../../DCA-PLDA/examples/speaker_verification
+n_tar=5000
+n_non=20000
 
-while getopts "t:d:o:a:s:D:" flag; do
-    case ${flag} in
-	t ) train_set=$OPTARG;;
-	d ) dev_sets=$OPTARG;;
-	o ) root_dir=$OPTARG;;
-	a ) arch_config=$OPTARG;;
-	s ) seed=$OPTARG;;
-	D ) device=$OPTARG;;
-	\? ) echo "Invalid option -$OPTARG"; exit 1;;
-    esac
-done
+#while getopts "t:d:o:a:s:D:" flag; do
+#    case ${flag} in
+#	t ) train_set=$OPTARG;;
+#	d ) dev_sets=$OPTARG;;
+#	o ) root_dir=$OPTARG;;
+#	a ) arch_config=$OPTARG;;
+#	s ) seed=$OPTARG;;
+#	D ) device=$OPTARG;;
+#	\? ) echo "Invalid option -$OPTARG"; exit 1;;
+ #   esac
+#done
 
 
 ###### Location of inputs
 
 data_dir=$plda_dir/data
-train_dir=./data
-trn_emb=$train_dir/train/embeddings_dev.h5
-trn_meta=$train_dir/train/metadata_$train_set
-ini_meta=$train_dir/train/metadata_${train_set}
-train_config1=configs/train/stage1.ini
-train_config2=configs/train/stage2.ini
+#train_dir=./data
+#trn_emb=$train_dir/train/embeddings_dev.h5
+#trn_meta=$train_dir/train/metadata_$train_set
+#ini_meta=$train_dir/train/metadata_${train_set}
+#train_config1=configs/train/stage1.ini
+#train_config2=configs/train/stage2.ini
 
 ###### Training in two stages
 
-train_flags="--restart --seed $seed"
-if [ $device != 'CPU' ]; then
-    train_flags="$train_flags --cuda"
-    export CUDA_VISIBLE_DEVICES=$device
-else
-    export CUDA_VISIBLE_DEVICES=""
-fi
+#train_flags="--restart --seed $seed"
+#if [ $device != 'CPU' ]; then
+#    train_flags="$train_flags --cuda"
+#    export CUDA_VISIBLE_DEVICES=$device
+#else
+#    export CUDA_VISIBLE_DEVICES=""
+#fi
 
 out_dir=$root_dir
-mkdir -p $out_dir/stage1/models
-dev_table=$out_dir/stage1/models/dev_table
+mkdir -p $out_dir/models
+data_table=$out_dir/models/data_table.h5
 
-for dev in $dev_sets; do
-    dev_emb=$data_dir/eval/$dev/embeddings_test.h5
-    dev_key=$data_dir/eval/$dev/keys/all.h5
-    dev_emap=$data_dir/eval/$dev/enroll.lst
-    dev_tmap=$data_dir/eval/$dev/test.lst
-    dev_durs=$data_dir/eval/$dev/durations
-    echo $dev $dev_emb $dev_key $dev_emap $dev_tmap $dev_durs 
-done > $dev_table
+
+dev_emb=$data_dir/eval/$dev_set/embeddings_test.h5
+dev_key=$data_dir/eval/$dev_set/keys/key_total.h5
+dev_scr=$plda_dir/output/voxaccent-s4/dplda/stage1/eval_best/voxceleb2_4ch_16sec/scores.h5
+
+
 date=`date +%Y.%m.%d.%H.%M`
 
-if [ ! -f $out_dir/stage1/models/DONE ]; then
-    echo "Starting stage1 in $out_dir/stage1/models"
-    echo "Log file: $out_dir/stage1/models/log.$date"
-    python3 -u $scripts/train.py $train_flags --configs $train_config1,$train_config2,$arch_config --init_subset $ini_meta $trn_emb $trn_meta $dev_table $out_dir/stage1/models > $out_dir/stage1/models/log.$date
+if [ ! -f $out_dir/models/DONE ]; then
+    echo "Starting stage1 in $out_dir/models"
+    echo "Log file: $out_dir/models/log.$date"
+    python3 -u $scripts/train.py --trn_embeddings $dev_emb --trn_key $dev_key --trn_scores $dev_scr --out_dir $data_table --n_tar $n_tar --n_non $n_non > $out_dir/models/log.$date
+    #python3 -u $scripts/train.py $train_flags --configs $train_config1,$train_config2,$arch_config --init_subset $ini_meta $trn_emb $trn_meta $dev_table $out_dir/stage1/models > $out_dir/stage1/models/log.$date
 fi
 
 #if [ ! -f $out_dir/stage2/models/DONE ] && [ $train_config2 != "" ]; then
