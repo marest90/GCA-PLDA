@@ -12,6 +12,8 @@ import re
 import shutil
 import torch.optim as optim
 import os
+import sys
+
 from numpy.linalg import cholesky as chol
 from scipy.linalg import solve_triangular
 from pathlib import Path
@@ -21,6 +23,9 @@ from dca_plda import data as ddata
 from dca_plda.scores import IdMap, Key, Scores
 from dca_plda import calibration 
 from dca_plda.utils import *
+
+sys.path.insert(0, '/home/mariel/dcaplda-repo/GCA-PLDA')
+import gca_plda.gca_utils as gca
 
 
 def mkdirp(dir):
@@ -81,7 +86,17 @@ def load_data_dict(table, device, fixed_enrollment_ids=None, map_enrollment_ids_
     return data_dict
 
 
-def train(model, trn_dataset, config, dev_table, out_dir, device, 
+def train(data_table_file):
+
+    enroll_ids, test_ids, key, score, emb1, emb2 = gca.load_data_table(data_table_file)
+
+    #print(enroll_ids)
+    print(enroll_ids[0], test_ids[0], key[0], score[0], emb1[0], emb2[0])
+
+        
+    
+
+def train2(model, trn_dataset, config, dev_table, out_dir, device, 
     seed=0, restart=False, debug=False, init_subset=None, print_min_loss=False):
 
     dev_data_dict = load_data_dict(dev_table, device, model.enrollment_classes)

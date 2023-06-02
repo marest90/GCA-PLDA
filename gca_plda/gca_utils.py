@@ -51,7 +51,11 @@ def delete_multiple_element(list_object, indices):
 def sample_key(keys_file, n_tar, n_non):
     """ Samples a list of key to a desire size, needs n_tar and n_non (int) to set the number of target and non target samples """
 
-    print('Sampling trials, this might take a while')    
+    print('Sampling trials, this might take a while')   
+    n_tar = int(n_tar)
+    n_non = int(n_non)
+
+
     key_test, key_enroll, key = keys_to_list(keys_file)
 
     tar_ind = list(numpy.nonzero(key)[0])
@@ -189,7 +193,7 @@ def create_data_table(keys_file, emb_file, scores_file, file_path, n_tar, n_non)
         for i in range(len(test_f)):
             scrs.append(scores_dict[enroll_f[i]][test_f[i]])
 
-        save_table(enroll_f, test_f, key_f, scrs, emb1, emb2, 'h5',folder_path)
+        save_table(enroll_f, test_f, key_f, scrs, emb1, emb2, 'h5',file_path)
 
 ###########################################################################################################
 def load_data_table(filename):
@@ -215,18 +219,18 @@ def load_data_table(filename):
     return enroll_ids, test_ids, key, score, emb1, emb2
 
 
-n_tar = 5000
-n_non = 20000
+#n_tar = 5000
+#n_non = 20000
 
-keys_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/keys/key_total.h5'
-emb_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/embeddings_test.h5'
-scores_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/output/voxaccent-s4/dplda/stage1/eval_best/voxceleb2_4ch_16sec/scores.h5'
-folder_path = './data_table.h5'
+#keys_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/keys/key_total.h5'
+#emb_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/embeddings_test.h5'
+#scores_file = '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/output/voxaccent-s4/dplda/stage1/eval_best/voxceleb2_4ch_16sec/scores.h5'
+#folder_path = './data_table.h5'
 
-create_data_table(keys_file, emb_file, scores_file, folder_path, n_tar, n_non)
+#create_data_table(keys_file, emb_file, scores_file, folder_path, n_tar, n_non)
 
-enroll_ids, test_ids, key, score, emb1, emb2 = load_data_table(folder_path)
+#enroll_ids, test_ids, key, score, emb1, emb2 = load_data_table(folder_path)
 
 #print(enroll_ids)
-print(enroll_ids[0], test_ids[0], key[0], score[0], emb1[0], emb2[0])
+#print(enroll_ids[0], test_ids[0], key[0], score[0], emb1[0], emb2[0])
 
