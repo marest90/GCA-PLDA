@@ -52,6 +52,7 @@ parser.add_argument('--trn_scores',     help='Path to the npz file with training
 parser.add_argument('--out_dir',       help='Output directory to the data table.')
 parser.add_argument('--n_tar',          help='Number of target trials to sample.')
 parser.add_argument('--n_non',          help='Number of non target trials to sample.')
+parser.add_argument('--n_pca',          help='Number of PCA dimensions.')
 #parser.add_argument('trn_metafile',   help='Path to the metadata for the training samples (all samples listed in this file should be present in the embeddings file).')
 #parser.add_argument('dev_table',      help='Path to a table with one dev set per line, including: name, npz file with embeddings, key file, and durations file (can be missing if not using duration-dependent calibration).')
 #parser.add_argument('--out_dir',        help='Output directory for models.')
@@ -88,7 +89,7 @@ gca.create_data_table(opt.trn_key, opt.trn_embeddings, opt.trn_scores, opt.out_d
 print("\n####################################################################################")
 print("Starting training")
 
-train(opt.out_dir)
+train(opt.out_dir, opt.n_pca)
 #train(model, trn_dataset, config.training, opt.dev_table, opt.out_dir, 
 #    device, opt.seed, opt.restart, opt.debug, opt.init_subset, opt.print_min_loss)
 

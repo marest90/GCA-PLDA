@@ -17,12 +17,14 @@ import sys
 from numpy.linalg import cholesky as chol
 from scipy.linalg import solve_triangular
 from pathlib import Path
+from sklearn.decomposition import PCA
 
 from dca_plda import modules 
 from dca_plda import data as ddata
 from dca_plda.scores import IdMap, Key, Scores
 from dca_plda import calibration 
 from dca_plda.utils import *
+
 
 sys.path.insert(0, '/home/mariel/dcaplda-repo/GCA-PLDA')
 import gca_plda.gca_utils as gca
@@ -86,12 +88,39 @@ def load_data_dict(table, device, fixed_enrollment_ids=None, map_enrollment_ids_
     return data_dict
 
 
-def train(data_table_file):
+def train(data_table_file, n_pca):
+    """ Takes as inputs:
+    data_table_file: table contining enroll_ids, test_ids, key, score, emb1, emb2
+    n_pca: number of dimensions to reduce embeddings """
 
     enroll_ids, test_ids, key, score, emb1, emb2 = gca.load_data_table(data_table_file)
 
     #print(enroll_ids)
     print(enroll_ids[0], test_ids[0], key[0], score[0], emb1[0], emb2[0])
+
+     
+    n_pca = int(n_pca)
+    pca = PCA(n_components=n_pca)
+ 
+    emb1_red = pca.fit_transform(emb1)
+    emb2_red = pca.fit_transform(emb2)
+    emb_concat = np. array(np.empty(emb1_red.shape))
+
+    #emb_concat=np.append(emb1_red[0], emb2_red[0], axis = 0)
+    #for i in range(len(emb1_red)):
+    #    concat=np.append(emb1_red[i], emb2_red[i], axis = 0)
+    #    emb_concat.append(concat)
+
+    #emb_concat=np.append(emb1_red, emb2_red) #,axis = 0)
+ 
+    #print('Shape before PCA: ', x_scaled.shape)
+
+    print(type(emb1_red))
+
+    con = np.concatenate((emb1_red, emb2_red), axis=1)
+    print(con[:5])
+    #print(type(emb_concat))
+
 
         
     
