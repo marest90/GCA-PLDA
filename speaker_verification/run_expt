@@ -15,6 +15,7 @@ root_dir=output/voxceleb2_dev
 plda_dir=../../DCA-PLDA/examples/speaker_verification
 n_tar=5000
 n_non=20000
+n_pca=10
 
 #while getopts "t:d:o:a:s:D:" flag; do
 #    case ${flag} in
@@ -64,7 +65,7 @@ date=`date +%Y.%m.%d.%H.%M`
 if [ ! -f $out_dir/models/DONE ]; then
     echo "Starting stage1 in $out_dir/models"
     echo "Log file: $out_dir/models/log.$date"
-    python3 -u $scripts/train.py --trn_embeddings $dev_emb --trn_key $dev_key --trn_scores $dev_scr --out_dir $data_table --n_tar $n_tar --n_non $n_non > $out_dir/models/log.$date
+    python3 -u $scripts/train.py --trn_embeddings $dev_emb --trn_key $dev_key --trn_scores $dev_scr --out_dir $data_table --n_tar $n_tar --n_non $n_non --n_pca $n_pca > $out_dir/models/log.$date
     #python3 -u $scripts/train.py $train_flags --configs $train_config1,$train_config2,$arch_config --init_subset $ini_meta $trn_emb $trn_meta $dev_table $out_dir/stage1/models > $out_dir/stage1/models/log.$date
 fi
 
