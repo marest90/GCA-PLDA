@@ -2,3 +2,4 @@ gca_plda/abrir_h5.py
 gca_plda/data2.h5
 gca_plda/data_table.h5
 speaker_verification/output
+speaker_verification/output/vox_dev/stage1/models/
