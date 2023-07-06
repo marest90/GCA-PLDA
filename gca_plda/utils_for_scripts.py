@@ -104,18 +104,6 @@ def train(data_table_file, n_pca):
  
     emb1_red = pca.fit_transform(emb1)
     emb2_red = pca.fit_transform(emb2)
-    emb_concat = np. array(np.empty(emb1_red.shape))
-
-    #emb_concat=np.append(emb1_red[0], emb2_red[0], axis = 0)
-    #for i in range(len(emb1_red)):
-    #    concat=np.append(emb1_red[i], emb2_red[i], axis = 0)
-    #    emb_concat.append(concat)
-
-    #emb_concat=np.append(emb1_red, emb2_red) #,axis = 0)
- 
-    #print('Shape before PCA: ', x_scaled.shape)
-
-    print(type(emb1_red))
 
     con = np.concatenate((emb1_red, emb2_red), axis=1)
     print(con[:5])
