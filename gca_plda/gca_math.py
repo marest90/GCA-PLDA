@@ -8,17 +8,25 @@ sys.path.insert(0, '/home/mariel/dcaplda-repo/DCA-PLDA')
 import dca_plda.calibration as calibration
 
 
-def normal_1d(mu, sigma, x):
+def normal_1d(mu, pres, x, n):
     """ Unidimensional normal with mu mean value and sigma the dispersion """
     """ All three elements must be floats """
 
-    normal = 1 / np.sqrt(2 * np.pi * sigma ) * math.exp(-1 / (2 * sigma) * (x - mu) **2)
+    if n == 0:
+        print('uni-dif=', x - mu)
+        print('pres=', pres)
+        print('uni-exp=', -pres / 2 * (x - mu) **2)
+
+    try:
+        normal = np.sqrt(abs(pres)) / np.sqrt(2 * np.pi) * math.exp(-pres / 2 * (x - mu) **2)
+    except OverflowError:
+        normal = np.inf
 
     return normal
 
 
 
-def normal_kd(theta_list, pres_list, x_list):
+def normal_kd(theta_list, pres_list, x_list, n):
     """ Multivariate normal of dimension k, the lenght of x  """
     """ The theta is the vector of mean values while sigma is the precision matrix """
     """ All three elements must be lists, the sigma is a list containing the elements in the diagonal, only diagonal allowed """
@@ -34,9 +42,19 @@ def normal_kd(theta_list, pres_list, x_list):
     #pres = np.linalg.inv(sigma)
     if np.linalg.det(pres) < 0:
         print('DET UNDER ZERO!!')
-        print('pres=', pres)
         print('exponencial=', -1/2 * (np.matmul(dif, np.matmul(pres, dif))))
-    normal = 1 / np.sqrt( (2 * np.pi) **k * abs(np.linalg.det(pres))) * math.exp( -1/2 * (np.matmul(dif, np.matmul(pres, dif))) )
+
+        #print('pres=', pres)
+
+    if n==0:
+        print('exponencial=', -1/2 * (np.matmul(dif, np.matmul(pres, dif))))
+        print('dif=', dif)
+        print('pres=', pres_list)
+
+    try:
+        normal = np.sqrt(abs(np.linalg.det(pres))) / np.sqrt( (2 * np.pi) **k) * math.exp( -1/2 * (np.matmul(dif, np.matmul(pres, dif))) )
+    except OverflowError:
+        normal = np.inf
 
     return normal
 
@@ -57,9 +75,9 @@ def ink(k, n, x, s, l, params):
     #print(thetak)
     #print(xn)
 
-    N1 = normal_kd(thetak, phik, xn)
-    N2 = normal_1d(muTk, float(lambk)**(-1), sn)
-    N3 = normal_1d(muNk, float(lambk)**(-1), sn)
+    N1 = normal_kd(thetak, phik, xn, n)
+    N2 = normal_1d(muTk, float(lambk), sn, n)
+    N3 = normal_1d(muNk, float(lambk), sn, n)
 
     i = wk * N1 * (N2 ** (ln)) * (N3 ** (1-ln))
 
@@ -145,7 +163,7 @@ def Q_func(params, N1, N0, r1, r0, r, rx, rxx, N, D):
 
     return Q/N, Q1/N, Q2/N, Q3/N, Q4/N
 
-def param_update(params, N1, N0, r1, r0, r, rx, rxx, kappa=0.001):
+def param_update(params, N1, N0, r1, r0, r, rx, rxx, kappa=0):
 
     k = len(N1)
     n = len(params['theta'][-1][0])
@@ -163,7 +181,7 @@ def param_update(params, N1, N0, r1, r0, r, rx, rxx, kappa=0.001):
     for kk in range(k):
         muT[kk] = r1[kk] / N1[kk]
         muN[kk] = r0[kk] / N0[kk]
-        lamb[kk] = (N1[kk] + N0[kk]) / (r[kk] - N1[kk] * params['muT'][-1][kk] - N0[kk] * params['muN'][-1][kk])
+        lamb[kk] = (N1[kk] + N0[kk]) / (r[kk] - N1[kk] * params['muT'][-1][kk] * params['muT'][-1][kk] - N0[kk] * params['muN'][-1][kk] * params['muN'][-1][kk])
         theta[kk] = rx[kk] / (N1[kk] + N0[kk] + kappa)
         phi[kk] = np.divide((N1[kk] + N0[kk]) * np.ones(n), rxx[kk] - (N1[kk] + N0[kk])*  (params['theta'][-1][kk] * params['theta'][-1][kk]))
 
@@ -204,7 +222,9 @@ def fCMLG(score_list, key_list):
     for i in range(len(s_d)):
         ss_d.append((s_d[i]-m_d)*(s_d[i]-m_d))
 
-    v = 0.5/len(s_e) * sum(ss_e) + 0.5/len(s_d) * sum(ss_d)
+    alpha = len(s_e) / (len(s_e) + len(s_d))
+
+    v = alpha/len(s_e) * sum(ss_e) + (1-alpha)/len(s_d) * sum(ss_d)
 
     a = (m_e - m_d)/v
     b = -1* a * (m_e + m_d)/2
@@ -232,8 +252,8 @@ def fGCA(params, s, x, n):
     b = np.zeros(k)
 
     for i in range(k):
-        a[i] = w[i] * normal_kd(theta[i], phi[i], xn) * normal_1d(muT[i], lamb[i] ** -1, sn)
-        b[i] = w[i] * normal_kd(theta[i], phi[i], xn) * normal_1d(muN[i], lamb[i] ** -1, sn)
+        a[i] = w[i] * normal_kd(theta[i], phi[i], xn,n) * normal_1d(muT[i], lamb[i], sn,n)
+        b[i] = w[i] * normal_kd(theta[i], phi[i], xn,n) * normal_1d(muN[i], lamb[i], sn,n)
 
     f = np.log(sum(a)/sum(b))
 
@@ -317,11 +337,13 @@ class calculate_params():
     def iter(self, num_it, con, score, key):
         #lambplus = self.param_dict['lamb'][-1]
         #self.param_dict['lamb'].append(lambplus)
+        
         n = len(con)
         k = self.param_dict['k']
         Q_list = []
 
         for j in range(num_it):
+            
             i_array = np.zeros((n,k))
             for nn in range(n):
                 for kk in range(k):
@@ -330,27 +352,28 @@ class calculate_params():
                     
             zetank = zeta(i_array)
 
-            print('zetank=', zetank)
+            #print('zetank=', zetank)
 
             N1, N0, r1, r0, r, rx, rxx = accumulated_params(zetank, key, score, con)
 
-            print('N1=', N1)
-            print('N0=', N0)
-            print('r1=', r1)
-            print('r0=', r0)
-            print('r=', r)
-            print('rx=', rx)
-            print('rxx=', rxx)
+            #print('N1=', N1)
+            #print('N0=', N0)
+            #print('r1=', r1)
+            #print('r0=', r0)
+            #print('r=', r)
+            #print('rx=', rx)
+            #print('rxx=', rxx)
 
             D = len(con[0]) /2
             N_emb = len(con)
 
-            print('D=', D, 'N_emb=', N_emb)
+            #print('D=', D, 'N_emb=', N_emb)
 
             #print(modelparam.param_dict['rho'])
             Q, q1, q2, q3, q4= Q_func(self.param_dict, N1, N0, r1, r0, r, rx, rxx, N_emb, D)
 
-            print(Q)
+            print('Q=',Q)
+            print('Qlist=',Q_list)
 
             rho2, w2, mut2, mun2, lamb2, theta2, phi2 = param_update(self.param_dict, N1, N0, r1, r0, r, rx, rxx)
 
@@ -363,16 +386,16 @@ class calculate_params():
             self.param_dict['theta'].append(theta2)
 
             Q_list.append(Q)
-
+            print('############################################################################')
             print('iteracion nro=', j)
         print('Q=', Q_list)
-        print('w=', self.param_dict['w'])
+        #print('w=', self.param_dict['w'])
         print('muT=', self.param_dict['muT'])
         print('muN=', self.param_dict['muN'])
         print('lamb=', self.param_dict['lamb'])
-        print('phi=', self.param_dict['phi_pres'])
-        print('rho=', self.param_dict['rho'])
-        print('theta=', self.param_dict['theta'])
+        #print('phi=', self.param_dict['phi_pres'])
+        #print('rho=', self.param_dict['rho'])
+        #print('theta=', self.param_dict['theta'])
 
     #print(w, w.shape)
     
