@@ -11,11 +11,15 @@ from dca_plda.utils_for_scripts import setup_torch_and_cuda_vars, print_graph, m
 from dca_plda.data import LabelledDataset
 from dca_plda.modules import DCA_PLDA_Backend
 
+
+
 #del nuevo rep
 sys.path.insert(0, '/home/mariel/dcaplda-repo/GCA-PLDA')
 from gca_plda.utils_for_scripts import train
 import gca_plda.gca_utils as gca
+import numpy as np
 
+np.random.seed(0)
 
 ###run with : python3 -u train.py --trn_embeddings '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/embeddings_test.h5' --trn_key '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/data/eval/voxceleb2_4ch_16sec/keys/key_total.h5' --trn_scores '/home/mariel/dcaplda-repo/DCA-PLDA/examples/speaker_verification/output/voxaccent-s4/dplda/stage1/eval_best/voxceleb2_4ch_16sec/scores.h5' --data_dir './data_table.h5' --n_tar 5000 --n_non 20000
 

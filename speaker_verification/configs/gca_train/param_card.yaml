@@ -1,10 +1,10 @@
 n_pca: 10
 Nx: 20 #2*n_pca
-k: 1
+k: 32
 w: uniform_distribution
 mu_T: 1
 mu_N: -1
-lambda: 1
+lambda: 0.01
 phi: 0.0003
 theta_mean: 0
 theta_pres: 100

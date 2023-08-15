@@ -140,7 +140,7 @@ def save_table(enroll_list, test_list, key_list, scores_list, emb1, emb2,format,
     # Writes the table to a txt file
     if format == 'txt':
         with open(file_name, 'w') as f:
-            for i in range(len(test_f)):
+            for i in range(len(test_list)):
                 f.write(test_list[i] + ' ' + enroll_list[i] + ' ' + str(key_list[i]) + ' ' + str(scores_list[i])) 
                 f.write('\n')
 
@@ -217,6 +217,10 @@ def load_data_table(filename):
                 test_ids   = [i.decode('UTF-8') for i in test_ids]
 
     return enroll_ids, test_ids, key, score, emb1, emb2
+
+
+
+
 
 
 #n_tar = 5000
